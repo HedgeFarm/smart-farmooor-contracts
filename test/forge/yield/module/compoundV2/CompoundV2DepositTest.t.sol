@@ -66,4 +66,21 @@ contract CompoundV2DepositTest is CompoundV2BaseTest {
         yieldModule.deposit(SMALL_AMOUNT);
         vm.stopPrank();
     }
+
+    function testDepositRevertIfAnErrorIsReturnedWhenDepositingInTheProtocol() public {
+        if (BASE_TOKEN == WAVAX) return; 
+        uint256[] memory errors = new uint256[](1);
+        errors[0] = 42;
+        vm.mockCall(
+            yieldModule.cToken(),
+            abi.encodeWithSignature("mint(uint256)", SMALL_AMOUNT),
+            abi.encode(errors)
+        );
+        deal(yieldModule.baseToken(), address(smartFarmooor), SMALL_AMOUNT);
+        vm.startPrank(address(smartFarmooor));
+        IERC20(yieldModule.baseToken()).approve(address(yieldModule), SMALL_AMOUNT);
+        vm.expectRevert("CompoundV2: deposit error");
+        yieldModule.deposit(SMALL_AMOUNT);
+        vm.stopPrank();
+    }
 }

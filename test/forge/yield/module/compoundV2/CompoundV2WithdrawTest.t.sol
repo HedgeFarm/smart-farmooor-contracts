@@ -111,4 +111,20 @@ contract CompoundV2WithdrawTest is CompoundV2BaseTest {
         assertEq(IERC20(yieldModule.baseToken()).balanceOf(OWNER), SMALL_AMOUNT);
         vm.stopPrank();
     }
+
+    function testWithdrawRevertIfAnErrorIsReturnedWhenRedeemingFromTheProtocol() public {
+        _deposit(address(smartFarmooor), SMALL_AMOUNT);
+
+        if (BASE_TOKEN == WAVAX) return; 
+        uint256[] memory errors = new uint256[](1);
+        errors[0] = 42;
+        vm.mockCall(
+            yieldModule.cToken(),
+            abi.encodeWithSignature("redeem(uint256)"),
+            abi.encode(errors)
+        );
+        vm.prank(address(smartFarmooor));
+        vm.expectRevert("CompoundV2: withdraw error");
+        yieldModule.withdraw(SMALL_AMOUNT, address(smartFarmooor));
+    }
 }

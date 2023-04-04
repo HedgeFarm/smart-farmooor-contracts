@@ -66,28 +66,47 @@ contract CompoundV2BaseTest is Deployer, TestHelper {
     }
 
     function testCanDeploy() public {
-        CompoundV2Module benqiYieldModuleImpl = new CompoundV2Module();
-
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(benqiYieldModuleImpl),
-            ""
-        );
-        CompoundV2Module benqiYieldModule = CompoundV2Module(payable(proxy));
-
         address[] memory rewards = new address[](2);
         rewards[0] = QI;
         rewards[1] = WAVAX;
-        benqiYieldModule.initialize(
-            address(smartFarmooor),
-            MANAGER,
-            BASE_TOKEN,
-            BENQI_EXECUTION_FEE,
-            address(dex),
-            rewards,
-            BENQI_COMPTROLLER,
-            BENQI_TOKEN,
-            BENQI_YIELD_MODULE_NAME,
-            WRAPPED_NATIVE_TOKEN);
+        CompoundV2Module benqiYieldModuleImpl = new CompoundV2Module();
+        ERC1967Proxy proxy = new ERC1967Proxy(address(benqiYieldModuleImpl), "");
+        CompoundV2Module benqiYieldModule = CompoundV2Module(payable(proxy));
+        benqiYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN, BENQI_EXECUTION_FEE, address(dex),
+            rewards, BENQI_COMPTROLLER, BENQI_TOKEN, BENQI_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN);
+
+        // Deployment revert if it fails to enter the market
+        address[] memory market = new address[](1);
+        market[0] = BENQI_TOKEN;
+        uint256[] memory errors = new uint256[](1);
+        errors[0] = 42;
+        vm.mockCall(
+            yieldModule.comptroller(),
+            abi.encodeWithSelector(ComptrollerInterface.enterMarkets.selector, market),
+            abi.encode(market)
+        );
+        benqiYieldModuleImpl = new CompoundV2Module();
+        proxy = new ERC1967Proxy(address(benqiYieldModuleImpl), "");
+        benqiYieldModule = CompoundV2Module(payable(proxy));
+        vm.expectRevert(bytes("CompoundV2: failed to enter market"));
+        benqiYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN, BENQI_EXECUTION_FEE, address(dex),
+            rewards, BENQI_COMPTROLLER, BENQI_TOKEN, BENQI_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN);
+
+        // Deployment revert if the comptroller address is the zero address
+        benqiYieldModuleImpl = new CompoundV2Module();
+        proxy = new ERC1967Proxy(address(benqiYieldModuleImpl), "");
+        benqiYieldModule = CompoundV2Module(payable(proxy));
+        vm.expectRevert(bytes("CompoundV2: cannot be the zero address"));
+        benqiYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN, BENQI_EXECUTION_FEE, address(dex),
+            rewards, address(0), BENQI_TOKEN, BENQI_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN);
+
+        // Deployment revert if the cToken address is the zero address
+        benqiYieldModuleImpl = new CompoundV2Module();
+        proxy = new ERC1967Proxy(address(benqiYieldModuleImpl), "");
+        benqiYieldModule = CompoundV2Module(payable(proxy));
+        vm.expectRevert(bytes("CompoundV2: cannot be the zero address"));
+        benqiYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN, BENQI_EXECUTION_FEE, address(dex),
+            rewards, BENQI_COMPTROLLER, address(0), BENQI_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN);
     }
 
     /** helper **/

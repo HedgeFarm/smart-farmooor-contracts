@@ -42,6 +42,12 @@ contract AaveYieldModule is BaseModule {
     /// @notice The last price per share used by the harvest
     uint256 public lastPricePerShare;
 
+    /**
+    * @notice  Disable initializing on implementation contract
+    **/
+    constructor() {
+        _disableInitializers();
+    }
     /** proxy **/
 
     /**
@@ -67,7 +73,7 @@ contract AaveYieldModule is BaseModule {
         AaveParams memory _params,
         string memory _name,
         address _wrappedNative
-    ) public initializer {
+    ) external initializer {
         _initializeBase(_smartFarmooor, _manager, _baseToken, _executionFee, _dex, _rewards, _name, _wrappedNative);
 
         pool = _params._pool;
@@ -146,7 +152,7 @@ contract AaveYieldModule is BaseModule {
     }
 
     /**
-     * @notice  Get last updated balance on CompoundV2 fork
+     * @notice  Get last updated balance on Aave
      * @dev     Returns an amount in Base token
      * @return  uint256  Amount of base token
      */
@@ -160,12 +166,12 @@ contract AaveYieldModule is BaseModule {
      * @return  uint256  Amount of native token
      */
     function getExecutionFee(uint256 shareFraction)
-        external
-        view
-        override
-        returns (uint256)
+    external
+    view
+    override
+    returns (uint256)
     {
-        return executionFee;
+        return 0;
     }
 
     /** helper **/
@@ -180,14 +186,14 @@ contract AaveYieldModule is BaseModule {
         uint256 lastAum = totalShares.rayMul(lastPricePerShare);
         uint256 currentAum = totalShares.rayMul(currentPricePerShare);
         uint256 aumDelta = currentAum - lastAum;
-        if(aumDelta > 0) {
+        if (aumDelta > 0) {
             IPoolAave(pool).withdraw(baseToken, aumDelta, address(this));
             lastPricePerShare = currentPricePerShare;
         }
     }
 
     /**
-     * @notice  Collects the rewards tokens earned on CompoundV2 fork
+     * @notice  Collects the rewards tokens earned on Aave
      * @dev     Reward tokens are swapped for Base token
      */
     function _rewardsProfit() private {
@@ -206,7 +212,7 @@ contract AaveYieldModule is BaseModule {
      * @dev     overridden for aToken address which is aave lp token
      * @return  aToken address
      */
-    function _lpToken() internal override view returns(address) {
+    function _lpToken() internal override view returns (address) {
         return aToken;
     }
 }

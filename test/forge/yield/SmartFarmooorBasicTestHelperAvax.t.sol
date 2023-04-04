@@ -30,6 +30,7 @@ contract SmartFarmooorBasicTestHelperAvax is Deployer, TestHelper {
         vm.startPrank(DEPLOYER);
         deployAll(doDex, doTimelock, doNativeGateway, setPrivateAccessAccounts());
         addAllModules();
+
         setModuleAllocation();
         smartFarmooor.unpause();
         transferAllOwnership(doDex, doNativeGateway);
@@ -40,7 +41,8 @@ contract SmartFarmooorBasicTestHelperAvax is Deployer, TestHelper {
         PRECISION = 1;
         uint256 decimals = IERC20Metadata(smartFarmooor.baseToken()).decimals();
         if (decimals == 18) {
-            PRECISION = 1e12;
+            PRECISION = 1e13;
+            //tbd
             DEPOSIT_AMOUNT = 1000 * 10 ** IERC20Metadata(BASE_TOKEN).decimals();
             BIG_DEPOSIT_AMOUNT = 100000 * 10 ** IERC20Metadata(BASE_TOKEN).decimals();
         }
@@ -57,7 +59,7 @@ contract SmartFarmooorBasicTestHelperAvax is Deployer, TestHelper {
         NEW_MIN_HARVEST_THRESHOLD = 42 * 10 ** IERC20Metadata(BASE_TOKEN).decimals();
     }
 
-    function setPrivateAccessAccounts() internal virtual view returns(address[] memory) {
+    function setPrivateAccessAccounts() internal virtual view returns (address[] memory) {
         return new address[](0);
     }
 
@@ -67,24 +69,32 @@ contract SmartFarmooorBasicTestHelperAvax is Deployer, TestHelper {
 
     function testCanDeploy() public {
         SmartFarmooor smartFarmooorImpl = new SmartFarmooor();
-
         ERC1967Proxy proxy = new ERC1967Proxy(address(smartFarmooorImpl), "");
         SmartFarmooor smartFarmooor = SmartFarmooor(payable(proxy));
-
-        smartFarmooor.initialize(
-            SM_NAME,
-            SM_SYMBOL,
-            SM_FEE_MANAGER,
-            BASE_TOKEN,
-            SM_MIN_HARVEST_THRESHOLD_IN_BASE_TOKEN,
-            SM_PERFORMANCE_FEE,
-            SM_CAP,
-            MANAGER,
-            address(timelock),
-            SM_MIN_AMOUNT,
-            setPrivateAccessAccounts()
+        smartFarmooor.initialize(SM_NAME, SM_SYMBOL, SM_FEE_MANAGER, BASE_TOKEN,
+            SM_MIN_HARVEST_THRESHOLD_IN_BASE_TOKEN, SM_PERFORMANCE_FEE, SM_CAP,
+            MANAGER, address(timelock), SM_MIN_AMOUNT, setPrivateAccessAccounts()
         );
-        smartFarmooor.pause();
+
+        // Deployment revert if the base token is the zero address
+        smartFarmooorImpl = new SmartFarmooor();
+        proxy = new ERC1967Proxy(address(smartFarmooorImpl), "");
+        smartFarmooor = SmartFarmooor(payable(proxy));
+        vm.expectRevert(bytes("SmartFarmooor: cannot be the zero address"));
+        smartFarmooor.initialize(SM_NAME, SM_SYMBOL, SM_FEE_MANAGER, address(0),
+            SM_MIN_HARVEST_THRESHOLD_IN_BASE_TOKEN, SM_PERFORMANCE_FEE, SM_CAP,
+            MANAGER, address(timelock), SM_MIN_AMOUNT, setPrivateAccessAccounts()
+        );
+
+        // Deployment revert if the min harvest threshold is the zero address
+        smartFarmooorImpl = new SmartFarmooor();
+        proxy = new ERC1967Proxy(address(smartFarmooorImpl), "");
+        smartFarmooor = SmartFarmooor(payable(proxy));
+        vm.expectRevert(bytes("SmartFarmooor: minHarvestThreshold cannot be zero"));
+        smartFarmooor.initialize(SM_NAME, SM_SYMBOL, SM_FEE_MANAGER, BASE_TOKEN,
+            0, SM_PERFORMANCE_FEE, SM_CAP,
+            MANAGER, address(timelock), SM_MIN_AMOUNT, setPrivateAccessAccounts()
+        );
     }
 
     //Will only make sure that user has more share after deposit than before
@@ -116,5 +126,13 @@ contract SmartFarmooorBasicTestHelperAvax is Deployer, TestHelper {
         uint256 sharesAfter = smartFarmooor.balanceOf(user);
         assertLt(sharesAfter, sharesBefore);
         vm.stopPrank();
+    }
+
+    function _fillLastModuleWithRestOfAllocation(uint _numberOfModules) public returns(uint) {
+        uint moduleAllocation = smartFarmooor.MAX_BPS() / _numberOfModules;
+        if (smartFarmooor.MAX_BPS() - moduleAllocation*_numberOfModules != moduleAllocation) {
+            return smartFarmooor.MAX_BPS() - (moduleAllocation * _numberOfModules);
+        }
+        return 0;
     }
 }

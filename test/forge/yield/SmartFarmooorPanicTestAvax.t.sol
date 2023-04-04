@@ -206,14 +206,14 @@ contract SmartFarmooorPanicTestAvax is SmartFarmooorBasicTestHelperAvax {
         depositHelper(ALICE, DEPOSIT_AMOUNT);
 
         uint ppsBefore = smartFarmooor.pricePerShare();
-
+        _moveBlock(10);
         vm.startPrank(address(timelock));
         smartFarmooor.panic();
         _moveBlock(1);
         smartFarmooor.finishPanic();
 
         uint ppsAfter = smartFarmooor.pricePerShare();
-        assertApproxEqAbs(ppsBefore, ppsAfter, IOU_DECIMALS / PRECISION);
+        assertGe(ppsAfter, ppsBefore);
     }
 
     function testPanicWithMultipleModules() public {
@@ -266,13 +266,27 @@ contract SmartFarmooorPanicTestAvax is SmartFarmooorBasicTestHelperAvax {
             allocations[i] = smartFarmooor.MAX_BPS() / numberOfModules;
         }
 
-        if (numberOfModules == 3)
-            allocations[numberOfModules - 1]++;
+        if (smartFarmooor.MAX_BPS() - ((smartFarmooor.MAX_BPS() / numberOfModules) * numberOfModules) != 0) {
+            allocations[numberOfModules - 1] += smartFarmooor.MAX_BPS() - ((smartFarmooor.MAX_BPS() / numberOfModules) * numberOfModules);
+        }
 
         smartFarmooor.setModuleAllocation(allocations);
         smartFarmooor.finishPanic();
 
         assertEq(smartFarmooor.paused(), false);
         vm.stopPrank();
+    }
+
+    function testPanicRevertIfTheExecutionFeeIsTooSmall() public {
+        depositHelper(ALICE, DEPOSIT_AMOUNT);
+        (IYieldModule module,) = smartFarmooor.yieldOptions(0);
+        vm.mockCall(
+            address(module),
+            abi.encodeWithSignature("getExecutionFee(uint256)", 10 ** smartFarmooor.decimals()),
+            abi.encode(1e18)
+        );
+        vm.prank(address(timelock));
+        vm.expectRevert(bytes("SmartFarmooor: msg.value to small for withdraw execution"));
+        smartFarmooor.panic{value: 0}();
     }
 }

@@ -18,10 +18,10 @@ contract UsdcData is CommonData, TokenData {
         AAVE_ACTIVE = true;
 
         // Allocation
-        STARGATE_ALLOCATION = 1000;
+        STARGATE_ALLOCATION = 2000;
         BENQI_ALLOCATION = 3000;
         BANKER_JOE_ALLOCATION = 4000;
-        AAVE_ALLOCATION = 2000;
+        AAVE_ALLOCATION = 1000;
 
         // Smart farmooor
         SM_NAME = "HedgeFarm Smart Farmooor USDC";

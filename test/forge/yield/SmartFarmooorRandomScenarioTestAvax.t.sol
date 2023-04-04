@@ -5,7 +5,7 @@ import "../../../script/Deployer.s.sol";
 import "./SmartFarmooorBasicTestHelperAvax.t.sol";
 
 contract SmartFarmooorRandomScenarioTestAvax is
-    SmartFarmooorBasicTestHelperAvax
+SmartFarmooorBasicTestHelperAvax
 {
     using SafeERC20 for IERC20;
 
@@ -75,7 +75,7 @@ contract SmartFarmooorRandomScenarioTestAvax is
 
     function testShouldDepositSetModuleWithdraw() public {
         (IYieldModule lastModule, uint256 allocationLastModule) = smartFarmooor
-            .yieldOptions(smartFarmooor.numberOfModules() - 1);
+        .yieldOptions(smartFarmooor.numberOfModules() - 1);
 
         vm.startPrank(address(timelock));
         smartFarmooor.pause();
@@ -88,7 +88,7 @@ contract SmartFarmooorRandomScenarioTestAvax is
             allocations[i] = allocation;
         }
         allocations[
-            smartFarmooor.numberOfModules() - 1
+        smartFarmooor.numberOfModules() - 1
         ] += allocationLastModule;
         smartFarmooor.setModuleAllocation(allocations);
         smartFarmooor.unpause();
@@ -108,10 +108,10 @@ contract SmartFarmooorRandomScenarioTestAvax is
             allocations[i] = allocation;
         }
         allocations[
-            smartFarmooor.numberOfModules() - 2
+        smartFarmooor.numberOfModules() - 2
         ] -= allocationLastModule;
         allocations[
-            smartFarmooor.numberOfModules() - 1
+        smartFarmooor.numberOfModules() - 1
         ] += allocationLastModule;
         smartFarmooor.setModuleAllocation(allocations);
         smartFarmooor.finishPanic();
@@ -163,60 +163,6 @@ contract SmartFarmooorRandomScenarioTestAvax is
         );
     }
 
-    function testAllocationShouldBeCorrectAfterHarvest() public {
-        depositHelper(ALICE, DEPOSIT_AMOUNT);
-
-        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
-            (IYieldModule module, uint256 allocation) = smartFarmooor
-                .yieldOptions(i);
-            assertApproxEqAbs(
-                module.getBalance(),
-                (DEPOSIT_AMOUNT * allocation) / smartFarmooor.MAX_BPS(),
-                smartFarmooor.numberOfModules() * PRECISION
-            );
-        }
-
-        _moveBlock(10000000);
-
-        uint256[] memory amounts = new uint256[](
-            smartFarmooor.numberOfModules()
-        );
-        bool test = false;
-        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
-            (IYieldModule module, uint256 allocation) = smartFarmooor
-                .yieldOptions(i);
-            amounts[i] =
-                (module.getBalance() * smartFarmooor.MAX_BPS()) /
-                allocation;
-            for (uint256 j = 0; j < i; j++) {
-                if (amounts[j] > amounts[i]) {
-                    // If imbalance we set test to true
-                    if (amounts[j] - amounts[i] > 1000) {
-                        test = true;
-                    }
-                } else {
-                    if (amounts[i] - amounts[j] > 1000) {
-                        test = true;
-                    }
-                }
-            }
-        }
-        assertTrue(test);
-
-        uint256 profit = smartFarmooor.harvest();
-
-        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
-            (IYieldModule module, uint256 allocation) = smartFarmooor
-                .yieldOptions(i);
-            assertApproxEqAbs(
-                module.getBalance(),
-                ((DEPOSIT_AMOUNT + profit) * allocation) /
-                    smartFarmooor.MAX_BPS(),
-                smartFarmooor.numberOfModules() * PRECISION
-            );
-        }
-    }
-
     function testWhaleShouldWithdrawEvenWithShrimp() public {
         uint256 whaleAmount;
         // Needed to avoid reaching max cap on aave with 18 decimals token
@@ -246,13 +192,68 @@ contract SmartFarmooorRandomScenarioTestAvax is
         uint shares = smartFarmooor.balanceOf(ALICE);
         vm.prank(ALICE);
         smartFarmooor.withdraw{value : 300000000000000000}(shares);
-        uint aliceBalanceWithoutStargateFunds =  IERC20(BASE_TOKEN).balanceOf(ALICE);
+        uint aliceBalanceWithoutStargateFunds = IERC20(BASE_TOKEN).balanceOf(ALICE);
         deal(BASE_TOKEN, ALICE, aliceBalanceWithoutStargateFunds + whaleAmount * STARGATE_ALLOCATION / MAX_BPS);
         withdrawHelper(BOB, smartFarmooor.balanceOf(BOB));
 
         assertEq(smartFarmooor.balanceOf(ALICE), 0);
         assertGt(IERC20(smartFarmooor.baseToken()).balanceOf(ALICE), whaleAmount);
         assertGt(IERC20(smartFarmooor.baseToken()).balanceOf(BOB), bobAmount);
+    }
+
+    function testAllocationShouldBeCorrectAfterHarvest() public {
+
+        depositHelper(ALICE, DEPOSIT_AMOUNT);
+
+        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
+            (IYieldModule module, uint256 allocation) = smartFarmooor
+            .yieldOptions(i);
+            assertApproxEqAbs(
+                module.getBalance(),
+                (DEPOSIT_AMOUNT * allocation) / smartFarmooor.MAX_BPS(),
+                smartFarmooor.numberOfModules() * PRECISION
+            );
+        }
+
+        _moveBlock(10000000);
+
+        uint256[] memory amounts = new uint256[](
+            smartFarmooor.numberOfModules()
+        );
+        bool test = false;
+        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
+            (IYieldModule module, uint256 allocation) = smartFarmooor
+            .yieldOptions(i);
+            amounts[i] =
+            (module.getBalance() * smartFarmooor.MAX_BPS()) /
+            allocation;
+            for (uint256 j = 0; j < i; j++) {
+                if (amounts[j] > amounts[i]) {
+                    // If imbalance we set test to true
+                    if (amounts[j] - amounts[i] > 1000) {
+                        test = true;
+                    }
+                } else {
+                    if (amounts[i] - amounts[j] > 1000) {
+                        test = true;
+                    }
+                }
+            }
+        }
+        assertTrue(test);
+
+        uint256 profit = smartFarmooor.harvest();
+
+        for (uint256 i = 0; i < smartFarmooor.numberOfModules(); i++) {
+            (IYieldModule module, uint256 allocation) = smartFarmooor
+            .yieldOptions(i);
+            assertApproxEqAbs(
+                module.getBalance(),
+                ((DEPOSIT_AMOUNT + profit) * allocation) /
+                smartFarmooor.MAX_BPS(),
+                smartFarmooor.numberOfModules() * PRECISION
+            );
+        }
     }
 
     function _waitAndHarvest() public {

@@ -1,5 +1,5 @@
 # SmartFarmooor
-[Git Source](https://github.com-hedgefarm/HedgeFarm/smart-farmer/blob/c90db012f9c5fe4b328d8988c68447eed814b014/contracts/yield/SmartFarmooor.sol)
+[Git Source](https://github.com/HedgeFarm/smart-farmer/blob/992c3b4a8bc708d23c14656e504528c18f790128/contracts/yield/SmartFarmooor.sol)
 
 **Inherits:**
 [ISmartFarmooor](/contracts/yield/interface/ISmartFarmooor.sol/contract.ISmartFarmooor.md), UUPSUpgradeable, PausableUpgradeable, ReentrancyGuardUpgradeable, ERC20Upgradeable, [Rescuable](/contracts/common/Rescuable.sol/contract.Rescuable.md), [Modifier](/contracts/common/library/Modifier.sol/contract.Modifier.md), [RoleManagement](/contracts/common/RoleManagement.sol/contract.RoleManagement.md)
@@ -28,6 +28,24 @@ bytes32 public constant HARVEST_PROFIT = keccak256(bytes("HARVEST_PROFIT"));
 
 ```solidity
 uint16 public constant MAX_BPS = 10000;
+```
+
+
+### MIN_ALLOCATION
+*Constant used to bound the minimum allocation*
+
+
+```solidity
+uint16 public constant MIN_ALLOCATION = 100;
+```
+
+
+### FINISH_PANIC_TOLERANCE
+*Tolerance used to take into account small rounding issue when checking if finish panic is ready*
+
+
+```solidity
+uint16 public constant FINISH_PANIC_TOLERANCE = 10;
 ```
 
 
@@ -112,15 +130,6 @@ uint256 public minAmount;
 ```
 
 
-### automationRules
-The address of the contract containing automation rules
-
-
-```solidity
-address public automationRules;
-```
-
-
 ### yieldOptions
 The list of active modules
 
@@ -138,6 +147,15 @@ Make sure Modules are empty before certain Admin operations
 
 ```solidity
 modifier onlyIfEmptyModule();
+```
+
+### constructor
+
+Disable initializing on implementation contract
+
+
+```solidity
+constructor();
 ```
 
 ### initialize
@@ -162,7 +180,7 @@ function initialize(
     address _admin,
     uint256 _minAmount,
     address[] memory _privateAccess
-) public initializer;
+) external initializer;
 ```
 **Parameters**
 
@@ -374,21 +392,6 @@ function setMinAmount(uint256 newMinAmount) external onlyRole(DEFAULT_ADMIN_ROLE
 |`newMinAmount`|`uint256`| New min amount for Deposits|
 
 
-### setAutomationRules
-
-Set the new automation rules contract
-
-
-```solidity
-function setAutomationRules(address newAutomationRules) external onlyRole(DEFAULT_ADMIN_ROLE);
-```
-**Parameters**
-
-|Name|Type|Description|
-|----|----|-----------|
-|`newAutomationRules`|`address`| Address of the new automation rules contract|
-
-
 ### pause
 
 Pause the Strategy
@@ -433,7 +436,7 @@ Returns the current price per share
 
 
 ```solidity
-function pricePerShare() public returns (uint256);
+function pricePerShare() external returns (uint256);
 ```
 **Returns**
 
@@ -655,7 +658,7 @@ function _harvest() private returns (uint256);
 
 |Name|Type|Description|
 |----|----|-----------|
-|`<none>`|`uint256`|uint  Profits harvested|
+|`<none>`|`uint256`|uint256  Profits harvested|
 
 
 ### _setFeeManager
@@ -748,26 +751,11 @@ function _setPerformanceFee(uint16 newPerformanceFee) private;
 |`newPerformanceFee`|`uint16`| New Performance fee|
 
 
-### _setAutomationRules
-
-Set the new automation rules contract
-
-
-```solidity
-function _setAutomationRules(address newAutomationRules) private;
-```
-**Parameters**
-
-|Name|Type|Description|
-|----|----|-----------|
-|`newAutomationRules`|`address`| Address of the new automation rules contract|
-
-
 ### _allocationIsCorrect
 
 
 ```solidity
-function _allocationIsCorrect() private;
+function _allocationIsCorrect() private view;
 ```
 
 ### checkUpkeep

@@ -8,10 +8,10 @@ contract AaveHarvestTest is AaveBaseTest {
     function testCanHarvest() public {
         uint256 lastPricePerShare = aaveYieldModule.lastPricePerShare();
         _deposit(address(smartFarmooor), SMALL_AMOUNT);
-        _moveBlock(10000);
+        _moveBlock(100000);
         _harvest(address(smartFarmooor), address(smartFarmooor));
         uint256 currentPricePerShare = aaveYieldModule.lastPricePerShare();
-        
+
         assertApproxEqAbs(aaveYieldModule.getBalance(), SMALL_AMOUNT, 1);
         assertEq(IERC20(aaveYieldModule.baseToken()).balanceOf(address(aaveYieldModule)), 0);
         assertGt(IERC20(aaveYieldModule.baseToken()).balanceOf(address(smartFarmooor)), 0);
@@ -28,7 +28,7 @@ contract AaveHarvestTest is AaveBaseTest {
         _moveBlock(1000);
         _harvest(address(smartFarmooor), address(smartFarmooor));
         _moveBlock(1000);
-        
+
         vm.prank(RANDOM_ADDRESS);
         vm.expectRevert("BaseModule: only smart farmooor");
         aaveYieldModule.harvest(address(smartFarmooor));

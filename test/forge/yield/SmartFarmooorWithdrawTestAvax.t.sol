@@ -193,4 +193,23 @@ contract SmartFarmooorWithdrawTestAvax is SmartFarmooorBasicTestHelperAvax {
         assertEq(IERC20(QI).balanceOf(address(timelock)), DEPOSIT_AMOUNT);
         vm.stopPrank();
     }
+
+    function testWithdrawRevertIfTheUserTryToWithdrawMoreThanHisShares() public {
+        depositHelper(ALICE, DEPOSIT_AMOUNT);
+        vm.expectRevert(bytes("SmartFarmooor: not enough shares"));
+        smartFarmooor.withdraw(1e42);
+    }
+
+    function testWithdrawRevertIfTheExecutionFeeIsTooSmall() public {
+        depositHelper(ALICE, DEPOSIT_AMOUNT);
+        (IYieldModule module,) = smartFarmooor.yieldOptions(0);
+        vm.mockCall(
+            address(module),
+            abi.encodeWithSignature("getExecutionFee(uint256)"),
+            abi.encode(1e18)
+        );
+        vm.prank(ALICE);
+        vm.expectRevert(bytes("SmartFarmooor: msg.value to small for withdraw execution"));
+        smartFarmooor.withdraw{value: 0}(10);
+    }
 }

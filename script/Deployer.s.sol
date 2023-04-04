@@ -40,7 +40,7 @@ contract Deployer is TimelockDeployer, DexDeployer, SmartFarmooorDeployer, Nativ
 
         // print the addresses of the components
         printComponentAddresses();
-        
+
         // print the storage of the components
         printComponentStorage();
     }
@@ -69,7 +69,7 @@ contract Deployer is TimelockDeployer, DexDeployer, SmartFarmooorDeployer, Nativ
             setAaveYieldModule();
         }
     }
-    
+
     function deployAll(bool doDex, bool doTimelock, bool doNativeGateway, address[] memory privateAccessAccounts) internal {
         // When we have a dex in prod we maybe don't want to deploy it again.
         // However we have to add the new routes manually through the multisig.
@@ -218,25 +218,25 @@ contract Deployer is TimelockDeployer, DexDeployer, SmartFarmooorDeployer, Nativ
     }
 
     function printComponentStorage() internal view {
-        if(address(dex) != address(0)) {
+        if (address(dex) != address(0)) {
             printDexStorage();
         }
-        if(address(smartFarmooor) != address(0)) {
+        if (address(smartFarmooor) != address(0)) {
             printSmartFarmooorStorage();
         }
-        if(address(nativeGateway) != address(0)) {
+        if (address(nativeGateway) != address(0)) {
             printNativeGatewayStorage();
         }
-        if(address(stargateYieldModule) != address(0)) {
+        if (address(stargateYieldModule) != address(0)) {
             printStargateStorage();
         }
-        if(address(benqiYieldModule) != address(0)) {
+        if (address(benqiYieldModule) != address(0)) {
             printBenqiStorage();
         }
-        if(address(bankerJoeYieldModule) != address(0)) {
+        if (address(bankerJoeYieldModule) != address(0)) {
             printBankerJoeStorage();
         }
-        if(address(aaveYieldModule) != address(0)) {
+        if (address(aaveYieldModule) != address(0)) {
             printAaveStorage();
         }
     }

@@ -229,6 +229,13 @@ abstract contract BaseModule is IYieldModule, UUPSUpgradeable, OwnableUpgradeabl
                 _rewards[i] != address(0),
                 "BaseModule: cannot be the zero address"
             );
+            uint256 j = i + 1;
+            for(j; j < _rewards.length; j++) {
+                require(
+                    _rewards[i] != _rewards[j],
+                    "BaseModule: duplicated rewards"
+                );
+            }
         }
         rewards = _rewards;
     }
@@ -246,6 +253,7 @@ abstract contract BaseModule is IYieldModule, UUPSUpgradeable, OwnableUpgradeabl
     }
 
     function _setName(string memory _name) private {
+        require(bytes(_name).length > 0,   "BaseModule: cannot be empty name");
         name = _name;
     }
 

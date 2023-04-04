@@ -2,7 +2,7 @@
 
 The Smart Farmooor is a vault that helps you earn a higher return on your cryptocurrency by analyzing and allocating your assets across multiple yield markets.
 
-![alt text](https://github.com/HedgeFarm/smart-farmer/blob/develop/docs/smartFarmooor-design.jpg?raw=true)
+![alt text](https://github.com/HedgeFarm/smart-farmooor-contracts/blob/master/docs/smartFarmooor-design.jpg?raw=true)
 
 ## Application
 

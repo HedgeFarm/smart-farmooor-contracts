@@ -37,8 +37,7 @@
 | performanceFee      | uint16                                                         | 507  | 0      | 2     | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
 | cap                 | uint256                                                        | 508  | 0      | 32    | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
 | minAmount           | uint256                                                        | 509  | 0      | 32    | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
-| automationRules     | address                                                        | 510  | 0      | 20    | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
-| yieldOptions        | mapping(uint256 => struct ISmartFarmooor.YieldModuleDetails)   | 511  | 0      | 32    | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
+| yieldOptions        | mapping(uint256 => struct ISmartFarmooor.YieldModuleDetails)   | 510  | 0      | 32    | contracts/yield/SmartFarmooor.sol:SmartFarmooor |
 
 =======================
 ➡ BaseModule

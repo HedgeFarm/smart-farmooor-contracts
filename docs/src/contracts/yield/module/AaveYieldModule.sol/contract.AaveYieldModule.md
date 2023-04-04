@@ -1,5 +1,5 @@
 # AaveYieldModule
-[Git Source](https://github.com-hedgefarm/HedgeFarm/smart-farmer/blob/c90db012f9c5fe4b328d8988c68447eed814b014/contracts/yield/module/AaveYieldModule.sol)
+[Git Source](https://github.com/HedgeFarm/smart-farmer/blob/992c3b4a8bc708d23c14656e504528c18f790128/contracts/yield/module/AaveYieldModule.sol)
 
 **Inherits:**
 [BaseModule](/contracts/yield/module/BaseModule.sol/contract.BaseModule.md)
@@ -77,6 +77,15 @@ uint256 public lastPricePerShare;
 
 
 ## Functions
+### constructor
+
+Disable initializing on implementation contract
+
+
+```solidity
+constructor();
+```
+
 ### initialize
 
 proxy *
@@ -97,7 +106,7 @@ function initialize(
     AaveParams memory _params,
     string memory _name,
     address _wrappedNative
-) public initializer;
+) external initializer;
 ```
 **Parameters**
 
@@ -200,7 +209,7 @@ function getBalance() public view returns (uint256);
 
 ### getLastUpdatedBalance
 
-Get last updated balance on CompoundV2 fork
+Get last updated balance on Aave
 
 *Returns an amount in Base token*
 
@@ -245,7 +254,7 @@ function _lpProfit() private;
 
 ### _rewardsProfit
 
-Collects the rewards tokens earned on CompoundV2 fork
+Collects the rewards tokens earned on Aave
 
 *Reward tokens are swapped for Base token*
 

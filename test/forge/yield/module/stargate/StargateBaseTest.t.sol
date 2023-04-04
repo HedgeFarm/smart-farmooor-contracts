@@ -37,36 +37,64 @@ contract StargateBaseTest is Deployer, TestHelper {
     }
 
     function testCanDeploy() public {
-        StargateYieldModule stargateYieldModuleImpl = new StargateYieldModule();
-
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(stargateYieldModuleImpl),
-            ""
-        );
-        StargateYieldModule stargateYieldModule = StargateYieldModule(payable(proxy));
-
         address[] memory rewards = new address[](1);
         rewards[0] = STG;
+        StargateYieldModule stargateYieldModuleImpl = new StargateYieldModule();
+        ERC1967Proxy proxy = new ERC1967Proxy(address(stargateYieldModuleImpl), "");
+        StargateYieldModule stargateYieldModule = StargateYieldModule(payable(proxy));
         StargateYieldModule.StargateParams memory params = StargateYieldModule
-        .StargateParams(
-            STARGATE_LP_STAKING,
-            STARGATE_ROUTER,
-            STARGATE_POOL,
-            STARGATE_ROUTER_POOL_ID,
-            STARGATE_REDEEM_FROM_CHAIN_ID,
-            STARGATE_LP_STAKING_POOL_ID,
-            STARGATE_LP_PROFIT_WITHDRAWL_THRESHOLD_IN_BASE_TOKEN
+        .StargateParams(STARGATE_LP_STAKING, STARGATE_ROUTER, STARGATE_POOL,
+            STARGATE_ROUTER_POOL_ID, STARGATE_REDEEM_FROM_CHAIN_ID, 
+            STARGATE_LP_STAKING_POOL_ID, STARGATE_LP_PROFIT_WITHDRAWL_THRESHOLD_IN_BASE_TOKEN
         );
-        stargateYieldModule.initialize(
-            address(smartFarmooor),
-            MANAGER,
-            BASE_TOKEN,
-            STARGATE_EXECUTION_FEE,
-            address(dex),
-            rewards,
-            params,
-            STARGATE_YIELD_MODULE_NAME,
-            WRAPPED_NATIVE_TOKEN
+        stargateYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN,
+            STARGATE_EXECUTION_FEE, address(dex), rewards, params,
+            STARGATE_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN
+        );
+
+        // Deployment revert if lpStaking is the zero address
+        stargateYieldModuleImpl = new StargateYieldModule();
+        proxy = new ERC1967Proxy(address(stargateYieldModuleImpl), "");
+        stargateYieldModule = StargateYieldModule(payable(proxy));
+        params = StargateYieldModule
+        .StargateParams(address(0), STARGATE_ROUTER, STARGATE_POOL,
+            STARGATE_ROUTER_POOL_ID, STARGATE_REDEEM_FROM_CHAIN_ID, 
+            STARGATE_LP_STAKING_POOL_ID, STARGATE_LP_PROFIT_WITHDRAWL_THRESHOLD_IN_BASE_TOKEN
+        );
+        vm.expectRevert(bytes("Stargate: cannot be the zero address"));
+        stargateYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN,
+            STARGATE_EXECUTION_FEE, address(dex), rewards, params,
+            STARGATE_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN
+        );
+
+        // Deployment revert if stargateRouter is the zero address
+        stargateYieldModuleImpl = new StargateYieldModule();
+        proxy = new ERC1967Proxy(address(stargateYieldModuleImpl), "");
+        stargateYieldModule = StargateYieldModule(payable(proxy));
+        params = StargateYieldModule
+        .StargateParams(STARGATE_LP_STAKING, address(0), STARGATE_POOL,
+            STARGATE_ROUTER_POOL_ID, STARGATE_REDEEM_FROM_CHAIN_ID, 
+            STARGATE_LP_STAKING_POOL_ID, STARGATE_LP_PROFIT_WITHDRAWL_THRESHOLD_IN_BASE_TOKEN
+        );
+        vm.expectRevert(bytes("Stargate: cannot be the zero address"));
+        stargateYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN,
+            STARGATE_EXECUTION_FEE, address(dex), rewards, params,
+            STARGATE_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN
+        );
+
+        // Deployment revert if pool is the zero address
+        stargateYieldModuleImpl = new StargateYieldModule();
+        proxy = new ERC1967Proxy(address(stargateYieldModuleImpl), "");
+        stargateYieldModule = StargateYieldModule(payable(proxy));
+        params = StargateYieldModule
+        .StargateParams(STARGATE_LP_STAKING, STARGATE_ROUTER, address(0),
+            STARGATE_ROUTER_POOL_ID, STARGATE_REDEEM_FROM_CHAIN_ID, 
+            STARGATE_LP_STAKING_POOL_ID, STARGATE_LP_PROFIT_WITHDRAWL_THRESHOLD_IN_BASE_TOKEN
+        );
+        vm.expectRevert(bytes("Stargate: cannot be the zero address"));
+        stargateYieldModule.initialize(address(smartFarmooor), MANAGER, BASE_TOKEN,
+            STARGATE_EXECUTION_FEE, address(dex), rewards, params,
+            STARGATE_YIELD_MODULE_NAME, WRAPPED_NATIVE_TOKEN
         );
     }
 

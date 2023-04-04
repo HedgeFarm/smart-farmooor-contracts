@@ -1,5 +1,5 @@
 # CompoundV2Module
-[Git Source](https://github.com-hedgefarm/HedgeFarm/smart-farmer/blob/c90db012f9c5fe4b328d8988c68447eed814b014/contracts/yield/module/CompoundV2Module.sol)
+[Git Source](https://github.com/HedgeFarm/smart-farmer/blob/992c3b4a8bc708d23c14656e504528c18f790128/contracts/yield/module/CompoundV2Module.sol)
 
 **Inherits:**
 [BaseModule](/contracts/yield/module/BaseModule.sol/contract.BaseModule.md), [ExponentialNoError](/contracts/yield/interface/compoundV2/ExponentialNoError.sol/contract.ExponentialNoError.md)
@@ -50,6 +50,15 @@ uint256 public lastPricePerShare;
 
 
 ## Functions
+### constructor
+
+Disable initializing on implementation contract
+
+
+```solidity
+constructor();
+```
+
 ### initialize
 
 proxy *
@@ -71,7 +80,7 @@ function initialize(
     address _cToken,
     string memory _name,
     address _wrappedNative
-) public initializer;
+) external initializer;
 ```
 **Parameters**
 
@@ -306,6 +315,36 @@ Claims all the rewards tokens
 ```solidity
 function _claimAllRewards() private;
 ```
+
+### _setComptroller
+
+Set Compound Comptroller
+
+
+```solidity
+function _setComptroller(address _comptroller) private;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`_comptroller`|`address`| Address of Comptroller contract|
+
+
+### _setCToken
+
+Set Compound collateral cToken
+
+
+```solidity
+function _setCToken(address _cToken) private;
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`_cToken`|`address`| Address of the cToken contract|
+
 
 ### _lpToken
 

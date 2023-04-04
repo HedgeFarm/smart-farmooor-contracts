@@ -67,4 +67,24 @@ contract StargateHarvestTest is StargateBaseTest {
         stargateYieldModule.harvest(address(smartFarmooor));
         vm.stopPrank();
     }
+
+    function testHarvestCanWithdrawLpProfit() public {
+        _deposit(address(smartFarmooor), SMALL_AMOUNT);
+        _moveBlock(100000);
+
+        vm.mockCall(
+            stargateYieldModule.pool(),
+            abi.encodeWithSelector(IPoolStargate.deltaCredit.selector),
+            abi.encode(1e20)
+        );
+        vm.mockCall(
+            stargateYieldModule.pool(),
+            abi.encodeWithSelector(IPoolStargate.totalLiquidity.selector),
+            abi.encode(1e15)
+        );
+
+        vm.prank(address(smartFarmooor));
+        stargateYieldModule.harvest(address(smartFarmooor));
+        assertGt(IERC20(stargateYieldModule.baseToken()).balanceOf(address(smartFarmooor)), 0);
+    }
 }

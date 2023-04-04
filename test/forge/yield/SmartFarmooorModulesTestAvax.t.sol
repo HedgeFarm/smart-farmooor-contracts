@@ -83,8 +83,9 @@ contract SmartFarmooorModulesTestAvax is SmartFarmooorBasicTestHelperAvax {
             allocations[i] = smartFarmooor.MAX_BPS() / numberOfModules;
         }
 
-        if (numberOfModules == 3)
-            allocations[numberOfModules - 1]++;
+        if (smartFarmooor.MAX_BPS() - ((smartFarmooor.MAX_BPS() / numberOfModules) * numberOfModules) != 0) {
+            allocations[numberOfModules - 1] += smartFarmooor.MAX_BPS() - ((smartFarmooor.MAX_BPS() / numberOfModules) * numberOfModules);
+        }
 
         vm.prank(address(timelock));
         smartFarmooor.setModuleAllocation(allocations);
@@ -232,8 +233,8 @@ contract SmartFarmooorModulesTestAvax is SmartFarmooorBasicTestHelperAvax {
         }
 
         //add benqi again : 1 benqi, 2 benqi
-        smartFarmooor.addModule(_deployExtraBenqiModule());
-        CompoundV2Module thirdBenqiModule = _deployExtraBenqiModule();
+        smartFarmooor.addModule(_deployExtraBenqiModule(BASE_TOKEN));
+        CompoundV2Module thirdBenqiModule = _deployExtraBenqiModule(BASE_TOKEN);
         smartFarmooor.addModule(thirdBenqiModule);
 
         uint[] memory allocations = new uint[](smartFarmooor.numberOfModules());
@@ -299,16 +300,13 @@ contract SmartFarmooorModulesTestAvax is SmartFarmooorBasicTestHelperAvax {
             allocations[i] = smartFarmooor.MAX_BPS() / numberOfModules;
         }
 
-        if (numberOfModules == 3)
-            allocations[numberOfModules - 1]++;
+        allocations[numberOfModules - 1] += _fillLastModuleWithRestOfAllocation(numberOfModules);
+        console.log(" allocations[numberOfModules - 1] : ",  allocations[numberOfModules - 1]);
 
-        smartFarmooor.setModuleAllocation(allocations);
+    smartFarmooor.setModuleAllocation(allocations);
 
-        for (uint256 i = 0; i < numberOfModules; i++) {
+        for (uint256 i = 0; i < numberOfModules - 1; i++) {
             (, uint allocation) = smartFarmooor.yieldOptions(i);
-            if (numberOfModules == 3 && i == 2)
-                assertEq(allocation, (smartFarmooor.MAX_BPS() / numberOfModules) + 1);
-            else
                 assertEq(allocation, smartFarmooor.MAX_BPS() / numberOfModules);
         }
 
@@ -358,7 +356,16 @@ contract SmartFarmooorModulesTestAvax is SmartFarmooorBasicTestHelperAvax {
         vm.stopPrank();
     }
 
-    function _deployExtraBenqiModule() internal returns (CompoundV2Module) {
+    function testAddModuleRevertIfBaseTokenDoesNotMatch() public {
+        IYieldModule wrongModule = _deployExtraBenqiModule(QI);
+        vm.startPrank(address(timelock));
+        smartFarmooor.pause();
+        vm.expectRevert(bytes("SmartFarmooor: not compatible module"));
+        smartFarmooor.addModule(wrongModule);
+        vm.stopPrank();
+    }
+
+    function _deployExtraBenqiModule(address baseToken) internal returns (CompoundV2Module) {
         address[] memory rewards = new address[](2);
         rewards[0] = QI;
         rewards[1] = WAVAX;
@@ -368,7 +375,7 @@ contract SmartFarmooorModulesTestAvax is SmartFarmooorBasicTestHelperAvax {
         benqiYieldModule2.initialize(
             address(smartFarmooor),
             MANAGER,
-            BASE_TOKEN,
+            baseToken,
             BENQI_EXECUTION_FEE,
             address(dex),
             rewards,

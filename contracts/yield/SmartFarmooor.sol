@@ -26,6 +26,10 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
     bytes32 public constant HARVEST_PROFIT = keccak256(bytes("HARVEST_PROFIT"));
     /// @dev Constant used for percentage calculation
     uint16 public constant MAX_BPS = 10000;
+    /// @dev Constant used to bound the minimum allocation
+    uint16 public constant MIN_ALLOCATION = 100;
+    /// @dev Tolerance used to take into account small rounding issue when checking if finish panic is ready
+    uint16 public constant FINISH_PANIC_TOLERANCE = 10;
     /// @dev Constant for the max value of uint256
     uint256 public constant UINT_MAX = type(uint256).max;
 
@@ -45,12 +49,9 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
     uint256 public cap;
     /// @notice The minimum amount that can be deposited in the strategy.
     uint256 public minAmount;
-    /// @notice The address of the contract containing automation rules
-    address public automationRules;
 
     /// @notice The list of active modules
     mapping(uint => YieldModuleDetails) public yieldOptions;
-
 
     event Deposit(address indexed user, uint amount);
     event Withdraw(address indexed user, uint shares, uint amount);
@@ -65,6 +66,12 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
         _;
     }
 
+    /**
+    * @notice  Disable initializing on implementation contract
+    **/
+    constructor() {
+        _disableInitializers();
+    }
 
     /** proxy **/
 
@@ -95,7 +102,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
         address _admin,
         uint256 _minAmount,
         address[] memory _privateAccess
-    ) public initializer {
+    ) external initializer {
         __UUPSUpgradeable_init();
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -161,7 +168,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
     function removeModule(uint _moduleId) external onlyRole(MANAGER_ROLE) whenPaused onlyIfEmptyModule {
         require(address(yieldOptions[_moduleId].module) != address(0), "SmartFarmooor : module does not exist");
         IERC20Upgradeable(baseToken).safeApprove(address(yieldOptions[_moduleId].module), 0);
-        for (uint i = _moduleId; i <= numberOfModules; i += 1) {
+        for (uint i = _moduleId; i < numberOfModules; i += 1) {
             yieldOptions[i] = yieldOptions[i + 1];
         }
         numberOfModules -= 1;
@@ -176,7 +183,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
         require(_allocation.length == numberOfModules, "SmartFarmooor: Allocation list size issue");
         uint totalAllocation = 0;
         for (uint i = 0; i < numberOfModules; i += 1) {
-            require(_allocation[i] >= 100, "SmartFarmooor: Min allocation too low");
+            require(_allocation[i] >= MIN_ALLOCATION, "SmartFarmooor: Min allocation too low");
             yieldOptions[i].allocation = _allocation[i];
             totalAllocation += yieldOptions[i].allocation;
         }
@@ -205,7 +212,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
     function finishPanic() external onlyRole(MANAGER_ROLE) whenPaused {
         uint256 localBalance = IERC20Upgradeable(baseToken).balanceOf(address(this));
         // Tolerance of 0.1%
-        require(localBalance >= balanceSnapshot * (MAX_BPS - 10) / MAX_BPS, "SmartFarmooor: funds still pending");
+        require(localBalance >= balanceSnapshot * (MAX_BPS - FINISH_PANIC_TOLERANCE) / MAX_BPS, "SmartFarmooor: funds still pending");
         _allocationIsCorrect();
         balanceSnapshot = 0;
         _deposit(localBalance);
@@ -255,14 +262,6 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
     }
 
     /**
-    * @notice  Set the new automation rules contract
-    * @param   newAutomationRules  Address of the new automation rules contract
-    */
-    function setAutomationRules(address newAutomationRules) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setAutomationRules(newAutomationRules);
-    }
-
-    /**
      * @notice  Pause the Strategy
      */
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -297,7 +296,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
      * @notice  Returns the current price per share
      * @return  uint  The current price per share
      */
-    function pricePerShare() public returns (uint) {
+    function pricePerShare() external returns (uint) {
         return totalSupply() == 0 ? 10 ** decimals() : getModulesBalance() * 10 ** decimals() / totalSupply();
     }
 
@@ -467,20 +466,19 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
 
     /**
      * @notice  Collects the profits from all the Modules and compounds them
-     * @return  uint  Profits harvested
+     * @return  uint256  Profits harvested
      */
-    function _harvest() private returns (uint){
+    function _harvest() private returns (uint256){
         uint256 profit = 0;
         for (uint256 i = 0; i < numberOfModules; i += 1) {
             profit += yieldOptions[i].module.harvest(address(this));
         }
-        uint fee = profit * performanceFee / MAX_BPS;
-        uint netProfit = profit - fee;
+        uint256 fee = profit * performanceFee / MAX_BPS;
         if (fee != 0) {
             IERC20Upgradeable(baseToken).safeTransfer(feeManager, fee);
         }
 
-        netProfit = IERC20(baseToken).balanceOf(address(this));
+        uint256 netProfit = IERC20(baseToken).balanceOf(address(this));
 
         if (netProfit > 0) {
             _deposit(netProfit);
@@ -535,7 +533,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
      * @param   newMinHarvestThreshold  New minimum harvest threshold
      */
     function _setMinHarvestThreshold(uint256 newMinHarvestThreshold) private {
-        require(baseToken != address(0), "SmartFarmooor: baseToken not initialized");
+        require(newMinHarvestThreshold > 0, "SmartFarmooor: minHarvestThreshold cannot be zero");
         minHarvestThreshold = newMinHarvestThreshold;
     }
 
@@ -551,19 +549,7 @@ contract SmartFarmooor is ISmartFarmooor, UUPSUpgradeable, PausableUpgradeable, 
         performanceFee = newPerformanceFee;
     }
 
-    /**
-    * @notice  Set the new automation rules contract
-    * @param   newAutomationRules  Address of the new automation rules contract
-    */
-    function _setAutomationRules(address newAutomationRules) private {
-        require(
-            newAutomationRules != address(0),
-            "SmartFarmooor: cannot be the zero address"
-        );
-        automationRules = newAutomationRules;
-    }
-
-    function _allocationIsCorrect() private {
+    function _allocationIsCorrect() private view {
         uint totalAllocation = 0;
         for (uint i = 0; i < numberOfModules; i += 1) {
             require(yieldOptions[i].allocation >= 100, "SmartFarmooor: Min allocation too low");

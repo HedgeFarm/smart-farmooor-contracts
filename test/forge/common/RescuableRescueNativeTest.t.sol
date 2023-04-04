@@ -21,4 +21,16 @@ contract RescuableRescueNativeTest is BaseModuleBaseTest {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         baseModule.rescueNative();
     }
+
+    function testRescueNativeRevertIfNativeTransferFail() public {
+        MockReceiver receiver = new MockReceiver();
+        vm.prank(OWNER);
+        baseModule.transferOwnership(address(receiver));
+
+        vm.prank(address(receiver));
+        vm.expectRevert(bytes("Failed to send Native token"));
+        baseModule.rescueNative();
+    }
 }
+
+contract MockReceiver {}

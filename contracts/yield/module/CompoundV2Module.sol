@@ -27,6 +27,12 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
     /// @notice The last price per share used by the harvest
     uint256 public lastPricePerShare;
 
+    /**
+    * @notice  Disable initializing on implementation contract
+    **/
+    constructor() {
+        _disableInitializers();
+    }
 
     /** proxy **/
 
@@ -55,11 +61,10 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
         address _cToken,
         string memory _name,
         address _wrappedNative
-    ) public initializer {
+    ) external initializer {
         _initializeBase(_smartFarmooor, _manager, _baseToken, _executionFee, _dex, _rewards, _name, _wrappedNative);
-
-        comptroller = _comptroller;
-        cToken = _cToken;
+        _setComptroller(_comptroller);
+        _setCToken(_cToken);
         lastPricePerShare = CTokenInterface(_cToken).exchangeRateCurrent();
 
         IERC20Upgradeable(baseToken).safeApprove(_cToken, type(uint256).max);
@@ -80,7 +85,6 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
     function deposit(uint256 amount) external onlySmartFarmooor {
         require(amount > 0, "CompoundV2: deposit amount cannot be zero");
         IERC20Upgradeable(baseToken).safeTransferFrom(msg.sender, address(this), amount);
-        uint256 error = 0;
         if (baseToken == wrappedNativeToken) {
             INativeWrapper(wrappedNativeToken).withdraw(amount);
             CErc20Interface(cToken).mint{value : amount}();
@@ -174,7 +178,7 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
     override
     returns (uint256)
     {
-        return executionFee;
+        return 0;
     }
 
     /** helper **/
@@ -189,8 +193,7 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
         uint256 pricePerShareDelta = currentPricePerShare - lastPricePerShare;
         uint256 sharesAmount = totalShares * pricePerShareDelta / currentPricePerShare;
         if (sharesAmount > 0) {
-            uint256 error = CErc20Interface(cToken).redeem(sharesAmount);
-            require(error == 0, "CompoundV2: withdraw error");
+            _redeem(sharesAmount);
             lastPricePerShare = currentPricePerShare;
         }
     }
@@ -255,7 +258,6 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
         for (uint i = 0; i < rewards.length; i++) {
             if (rewards[i] != baseToken) {
                 uint256 rewardBalance = IERC20Upgradeable(rewards[i]).balanceOf(address(this));
-                uint256 expectedAmount = IDex(dex).swapPreview(rewardBalance, rewards[i], baseToken);
                 IDex(dex).swap(rewardBalance, rewards[i], baseToken, address(this));
             }
         }
@@ -279,6 +281,24 @@ contract CompoundV2Module is BaseModule, ExponentialNoError {
                 true
             );
         }
+    }
+
+    /**
+    * @notice  Set Compound Comptroller
+    * @param   _comptroller  Address of Comptroller contract
+    */
+    function _setComptroller(address _comptroller) private {
+        require(_comptroller != address(0), "CompoundV2: cannot be the zero address");
+        comptroller = _comptroller;
+    }
+
+    /**
+    * @notice  Set Compound collateral cToken
+    * @param   _cToken  Address of the cToken contract
+    */
+    function _setCToken(address _cToken) private {
+        require(_cToken != address(0), "CompoundV2: cannot be the zero address");
+        cToken = _cToken;
     }
 
     /**

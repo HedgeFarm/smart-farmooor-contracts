@@ -41,4 +41,10 @@ contract AaveDepositTest is AaveBaseTest {
         aaveYieldModule.deposit(SMALL_AMOUNT);
         vm.stopPrank();
     }
+
+    function testCannotDepositZeroAmount() public {
+        vm.prank(address(smartFarmooor));
+        vm.expectRevert("Aave: deposit amount cannot be zero");
+        aaveYieldModule.deposit(0);
+    }
 }

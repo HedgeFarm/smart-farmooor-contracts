@@ -31,7 +31,7 @@ contract DataLoader is Script, Test, EnvData, TestData, CommonData, TimelockData
     // This function should only used when interacting with prod or stage
     function loadData() public {
         // We check here that the environment variables have been properly set.
-        // If one of the variable is the default value (zero, empty string, etc), 
+        // If one of the variable is the default value (zero, empty string, etc),
         // it means that the .env is not correctly set.
         require(keccak256(bytes(BASE_TOKEN_NAME)) != keccak256(bytes(string(""))), "BASE_TOKEN_NAME must not be empty");
         require(TIMELOCK != address(0), "TIMELOCK != address(0)");

@@ -181,5 +181,4 @@ contract TraderJoeDexModuleTest is Deployer, TestHelper {
         vm.prank(OWNER);
         dex.setRoutes(newRoutes);
     }
-
 }

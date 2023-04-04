@@ -21,9 +21,8 @@ contract Updatoor is Deployer {
         BENQI_ACTIVE = BENQI_ACTIVE_CURRENT_VALUE;
         BANKER_JOE_ACTIVE = BANKER_JOE_ACTIVE_CURRENT_VALUE;
         AAVE_ACTIVE = AAVE_ACTIVE_CURRENT_VALUE;
-
         setSmartFarmooor();
-        
+
         // deploy and set up contracts
         vm.startBroadcast();
 

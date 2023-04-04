@@ -20,6 +20,6 @@ contract Rescuable {
      */
     function _rescueNative() internal {
         (bool sent, ) = msg.sender.call{value: address(this).balance}("");
-        require(sent, "Failed to send Ether");
+        require(sent, "Failed to send Native token");
     }
 }

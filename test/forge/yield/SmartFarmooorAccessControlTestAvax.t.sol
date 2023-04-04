@@ -203,4 +203,13 @@ contract SmartFarmooorAccessControlTestAvax is SmartFarmooorBasicTestHelperAvax 
         smartFarmooor.grantRole(privateAccessRole, ALICE);
         vm.stopPrank();
     }
+
+    function testPublicDeploymentCanNotRevokePrivateAccessAccounts() public {
+        bytes32 privateAccessRole = smartFarmooor.PRIVATE_ACCESS_ROLE();
+
+        vm.startPrank(address(timelock));
+        vm.expectRevert('PRIVATE_ACCESS_ROLE not allowed in public deployment');
+        smartFarmooor.revokeRole(privateAccessRole, BOB);
+        vm.stopPrank();
+    }
 }

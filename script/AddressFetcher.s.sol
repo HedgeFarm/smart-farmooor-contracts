@@ -26,8 +26,6 @@ contract AddressFetcher {
     bytes32 private BANKER_JOE_YIELD_MODULE = keccak256(bytes("BankerJoeYieldModule"));
     bytes32 private AAVE_YIELD_MODULE = keccak256(bytes("AaveV3YieldModule"));
 
-    
-
     function fetchAddresses(address _smartFarmooorAddress) public {
         smartFarmooorAddress = _smartFarmooorAddress;
         smartFarmooorImplAddress = ISmartFarmooor(smartFarmooorAddress).getImplementation();

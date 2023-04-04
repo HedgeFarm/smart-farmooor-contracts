@@ -17,11 +17,13 @@ contract UsdtData is CommonData, TokenData {
         BANKER_JOE_ACTIVE = true;
         AAVE_ACTIVE = true;
 
+
         // Allocation
         STARGATE_ALLOCATION = 6000;
         BENQI_ALLOCATION = 1000;
         BANKER_JOE_ALLOCATION = 2000;
         AAVE_ALLOCATION = 1000;
+
 
         // Smart farmooor
         SM_NAME = "HedgeFarm Smart Farmooor USDT";

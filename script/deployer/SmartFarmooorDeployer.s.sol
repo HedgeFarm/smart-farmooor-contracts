@@ -78,7 +78,7 @@ contract SmartFarmooorDeployer is DataLoader, AddressFetcher {
         assertEq(smartFarmooor.minAmount(), SM_MIN_AMOUNT);
 
         //If private deployment then private accounts must be declared
-        if(smartFarmooor.isPrivateAccess()) {
+        if (smartFarmooor.isPrivateAccess()) {
             assertGt(smartFarmooor.getRoleMemberCount(smartFarmooor.PRIVATE_ACCESS_ROLE()), 0);
         } else {
             assertEq(smartFarmooor.getRoleMemberCount(smartFarmooor.PRIVATE_ACCESS_ROLE()), 0);
@@ -139,7 +139,6 @@ contract SmartFarmooorDeployer is DataLoader, AddressFetcher {
         if (AAVE_ACTIVE) {
             moduleAllocations.push(AAVE_ALLOCATION);
         }
-
         smartFarmooor.setModuleAllocation(moduleAllocations);
     }
 

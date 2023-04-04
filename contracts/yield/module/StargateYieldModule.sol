@@ -47,6 +47,13 @@ contract StargateYieldModule is BaseModule {
     /// @notice The last price per share used by the harvest
     uint256 public lastPricePerShare;
 
+    /**
+    * @notice  Disable initializing on implementation contract
+    **/
+    constructor() {
+        _disableInitializers();
+    }
+
     /** proxy **/
 
     /**
@@ -72,7 +79,7 @@ contract StargateYieldModule is BaseModule {
         StargateParams memory params,
         string memory _name,
         address _wrappedNative
-    ) public initializer {
+    ) external initializer {
         _initializeBase(_smartFarmooor, _manager, _baseToken, _executionFee, _dex, _rewards, _name, _wrappedNative);
         _setStargateRouter(params.stargateRouter);
         _setLpStaking(params.lpStaking);
@@ -184,7 +191,7 @@ contract StargateYieldModule is BaseModule {
     }
 
     /**
-     * @notice  Get last updated balance on CompoundV2 fork
+     * @notice  Get last updated balance on Stargate pool
      * @dev     Returns an amount in Base token
      * @return  uint256  Amount of base token
      */
@@ -270,7 +277,7 @@ contract StargateYieldModule is BaseModule {
      */
     function _setLpProfitWithdrawalThreshold(uint256 _lpProfitWithdrawalThreshold) private {
         require(baseToken != address(0), "Stargate: baseToken not initialized");
-        require(_lpProfitWithdrawalThreshold >= _baseTokenDecimalsExp() , "Stargate: lpProfitWithdrawalThreshold must be at least 1 dollar");
+        require(_lpProfitWithdrawalThreshold >= _baseTokenDecimalsExp(), "Stargate: lpProfitWithdrawalThreshold must be at least 1 dollar");
         lpProfitWithdrawalThreshold = _lpProfitWithdrawalThreshold;
     }
 
@@ -312,7 +319,7 @@ contract StargateYieldModule is BaseModule {
     function _withdraw(uint256 amount, address receiver, function (uint256, address) internal redeem) private returns (uint256) {
         uint256 lpAmount = _totalLpTokens() * _fixoor(amount) / getBalance();
         // if delta credits ~ 0 we might try to withdraw 0 because of rounding
-        if(lpAmount == 0) {
+        if (lpAmount == 0) {
             return 0;
         }
         ILpStaking(lpStaking).withdraw(lpStakingPoolId, lpAmount);
@@ -363,7 +370,7 @@ contract StargateYieldModule is BaseModule {
     /**
      * @notice  Amount of Delta credits available on Stargate Pool
      */
-    function _poolDeltaCredit() internal virtual view returns(uint256) {
+    function _poolDeltaCredit() internal virtual view returns (uint256) {
         return IPoolStargate(pool).deltaCredit();
     }
 
@@ -372,7 +379,7 @@ contract StargateYieldModule is BaseModule {
      * @dev     Stargate is not accurate enough to rely on Base token amount during withdrawals
      * @param   amount  Amount of Base token
      */
-    function _fixoor(uint amount) private view returns(uint256) {
+    function _fixoor(uint amount) private view returns (uint256) {
         if (amount > getBalance())
             return getBalance();
         return amount;
@@ -383,8 +390,8 @@ contract StargateYieldModule is BaseModule {
      * @dev     share fraction that represents 1 (100%) is equal to IOU_DECIMALS so if fraction is bigger we just return the maximum value ( getBalance())
      * @param   shareFraction  fraction of user iou share
      */
-    function _amountFromShareFraction(uint256 shareFraction) private view returns(uint256) {
-        if(shareFraction > IOU_DECIMALS_EXP) {
+    function _amountFromShareFraction(uint256 shareFraction) private view returns (uint256) {
+        if (shareFraction > IOU_DECIMALS_EXP) {
             return getBalance();
         } else {
             return shareFraction * getBalance() / IOU_DECIMALS_EXP;
@@ -394,7 +401,7 @@ contract StargateYieldModule is BaseModule {
     /**
      * @notice  Exponentiation. 10 is base and decimals() is the exponent
      */
-    function _baseTokenDecimalsExp() private view returns(uint256) {
+    function _baseTokenDecimalsExp() private view returns (uint256) {
         return 10 ** IERC20Metadata(baseToken).decimals();
     }
 
@@ -403,7 +410,7 @@ contract StargateYieldModule is BaseModule {
      * @dev     Pool is ERC20 contract which emits lp tokens
      * @return  pool ERC20 address
      */
-    function _lpToken() internal override view returns(address) {
+    function _lpToken() internal override view returns (address) {
         return pool;
     }
 }

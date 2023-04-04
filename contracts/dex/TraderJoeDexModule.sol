@@ -89,7 +89,7 @@ contract TraderJoeDexModule is IDex, Ownable, Rescuable {
      * @notice  Delete routes
      * @param   _routes  Routes to delete
      */
-    function deleteRoutes(address[][] memory _routes) public onlyOwner {
+    function deleteRoutes(address[][] memory _routes) external onlyOwner {
         for (uint8 i = 0; i < _routes.length; i++) {
             delete routes[_routes[i][0]][_routes[i][_routes[i].length - 1]];
         }
